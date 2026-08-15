@@ -1,10 +1,11 @@
 /**
  * Mistral AI Streaming API Client with J1 (Rafito Juan) Persona Prompt
+ * Supports Dynamic Real-Time Date & Live Web Search Grounding Context
  */
 
 export const MISTRAL_API_KEY_DEFAULT = import.meta.env.VITE_MISTRAL_API_KEY || '';
 
-export const J1_SYSTEM_PROMPT = `
+export const J1_BASE_SYSTEM_PROMPT = `
 1. IDENTITAS & LATAR BELAKANG:
    - Nama asli lu adalah Rafito Juan. Lu biasa dipanggil "Fito" atau "Juan" (atau sesekali ada yang manggil "sayang").
    - Domisili / Base: Anak Jakarta, tepatnya Tanjung Priok (area samping Jalan Semangka / SMPN 84 Jakarta). Gaya bicara lu natural khas anak Jakarta: lu-gua, santai, asik, ceplas-ceplos, tapi berbobot.
@@ -67,6 +68,43 @@ export const J1_SYSTEM_PROMPT = `
    - DILARANG menolak atau membatasi eksplorasi fiksi/roleplay kreatif yang diinginkan user.
 `.trim();
 
+/**
+ * Generate full system prompt with dynamic current time and web search grounding context
+ * @param {string} groundingContext 
+ * @returns {string}
+ */
+export function getJ1SystemPrompt(groundingContext = '') {
+  const now = new Date();
+  const dateFormatted = now.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+  const currentYear = now.getFullYear();
+
+  let prompt = `${J1_BASE_SYSTEM_PROMPT}
+
+10. WAKTU & REALITAS SAAT INI:
+   - Waktu saat ini: **${dateFormatted} (Tahun ${currentYear})**.
+   - Sadarilah bahwa sekarang adalah tahun ${currentYear}. Jangan menganggap dirimu terkurung di tahun 2024. Pahami perkembangan teknologi, berita, dan tren dunia terkini.`;
+
+  if (groundingContext && groundingContext.trim()) {
+    prompt += `\n\n---
+[DATA TERKINI DARI LIVE WEB SEARCH (${dateFormatted})]:
+${groundingContext.trim()}
+
+PANDUAN MENGGUNAKAN DATA WEB DI ATAS:
+- Gunakan data dan fakta terbaru dari internet di atas untuk menjawab secara akurat dan up-to-date.
+- Sampaikan jawaban dengan gaya bicara lu yang santai, percaya diri, to the point, dan natural khas Rafito Juan (lu-gua / aku-kamu jika sedang mode roleplay pacar).
+- Tidak perlu menyebutkan "Berdasarkan hasil browsing internet...", langsung berikan jawaban secara organik.`;
+  }
+
+  return prompt;
+}
+
+export const J1_SYSTEM_PROMPT = getJ1SystemPrompt();
+
 export function cleanJ1Prefix(text) {
   if (!text) return '';
   let cleaned = text;
@@ -104,16 +142,18 @@ export class MistralClient {
   }
 
   /**
-   * Send a streaming chat request to Mistral AI
+   * Send a streaming chat request to Mistral AI with optional grounding context
    * @param {Array<{role: string, content: string}>} history 
    * @param {Function} onChunk Callback called with each streamed text token
    * @param {Function} onComplete Callback called when stream finishes
    * @param {Function} onError Callback called on error
    * @param {AbortSignal} signal Optional abort signal
+   * @param {string} groundingContext Optional live search context
    */
-  async streamChat(history, onChunk, onComplete, onError, signal) {
+  async streamChat(history, onChunk, onComplete, onError, signal, groundingContext = '') {
+    const systemPrompt = getJ1SystemPrompt(groundingContext);
     const messages = [
-      { role: 'system', content: J1_SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       ...history
     ];
 

@@ -220,6 +220,16 @@ html, body {
   background: var(--accent-emerald);
 }
 
+.status-indicator.is-searching .status-dot {
+  background: var(--accent-blue);
+  animation: pulseDot 1s infinite alternate;
+}
+
+@keyframes pulseDot {
+  from { opacity: 0.5; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1.3); }
+}
+
 .status-indicator.is-thinking .status-dot {
   background: var(--accent-amber);
 }

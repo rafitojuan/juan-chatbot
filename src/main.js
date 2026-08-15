@@ -1,11 +1,13 @@
 /**
  * Main Application Orchestrator for J1 AI Chat (Clean Capsule Reference Edition)
+ * Integrated with Free Live Web Search Grounding & Chroma Key Avatar
  */
 
 import { J1HeadController } from './chromakey.js';
 import { MistralClient } from './api.js';
 import { AudioManager } from './audio.js';
 import { ChatManager } from './chat.js';
+import { shouldSearchWeb, searchWeb } from './search.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
@@ -24,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const settingsModal = document.getElementById('settingsModal');
   const closeSettingsBtn = document.getElementById('closeSettingsBtn');
   const soundSwitch = document.getElementById('soundSwitch');
+  const webSearchSwitch = document.getElementById('webSearchSwitch');
   const modalClearHistoryBtn = document.getElementById('modalClearHistoryBtn');
 
   // Chroma key slider controls
@@ -37,6 +40,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Services Initialization
   const audio = new AudioManager();
   const mistral = new MistralClient();
+
+  // State
+  let isWebSearchEnabled = localStorage.getItem('j1_web_search_enabled') !== 'false';
+  if (webSearchSwitch) {
+    webSearchSwitch.checked = isWebSearchEnabled;
+  }
 
   // Avatar Elements & Hybrid Chroma Key Controller (PNG Idle + WebGL Video Talking)
   const j1AvatarImg = document.getElementById('j1AvatarImg');
@@ -61,8 +70,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper to update status UI
   const updateStatus = (state) => {
-    if (statusBadge) statusBadge.classList.remove('is-thinking', 'is-talking');
-    if (state === 'thinking') {
+    if (statusBadge) statusBadge.classList.remove('is-thinking', 'is-talking', 'is-searching');
+    if (state === 'searching') {
+      if (statusBadge) statusBadge.classList.add('is-searching');
+      if (statusText) statusText.textContent = 'Mencari di web 🌐...';
+      if (avatar) avatar.setThinking();
+    } else if (state === 'thinking') {
       if (statusBadge) statusBadge.classList.add('is-thinking');
       if (statusText) statusText.textContent = 'Mikir...';
       if (avatar) avatar.setThinking();
@@ -126,6 +139,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     isGenerating = true;
     if (sendBtn) sendBtn.disabled = true;
+
+    // Live Web Search Detection & Execution
+    let groundingContext = '';
+    const needsSearch = isWebSearchEnabled && shouldSearchWeb(text);
+
+    if (needsSearch) {
+      updateStatus('searching');
+      try {
+        const searchResult = await searchWeb(text);
+        if (searchResult && searchResult.hasResults) {
+          groundingContext = searchResult.context;
+        }
+      } catch (searchErr) {
+        console.warn('Live search error:', searchErr);
+      }
+    }
+
     updateStatus('thinking');
 
     // Prepare streaming
@@ -161,7 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
         (error) => {
           chat.addErrorMessage(error.message || 'Gagal koneksi ke J1');
         },
-        activeAbortController.signal
+        activeAbortController.signal,
+        groundingContext
       );
     } catch (err) {
       console.error('Stream processing error:', err);
@@ -247,6 +278,13 @@ document.addEventListener('DOMContentLoaded', () => {
   if (soundSwitch) {
     soundSwitch.addEventListener('change', () => {
       audio.soundEnabled = soundSwitch.checked;
+    });
+  }
+
+  if (webSearchSwitch) {
+    webSearchSwitch.addEventListener('change', () => {
+      isWebSearchEnabled = webSearchSwitch.checked;
+      localStorage.setItem('j1_web_search_enabled', isWebSearchEnabled);
     });
   }
 
