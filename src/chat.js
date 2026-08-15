@@ -128,7 +128,8 @@ Mau ngapain kita hari ini? Ngobrol santai, ide project, atau coding bareng? Ting
     this.messages.push(msg);
     this._saveHistory();
     this._appendMessageDOM(msg);
-    this.scrollToBottom();
+    this.shouldAutoScroll = true;
+    this.scrollToBottom(true);
     if (this.onMessageAdd) this.onMessageAdd(msg);
     return msg;
   }
@@ -143,7 +144,8 @@ Mau ngapain kita hari ini? Ngobrol santai, ide project, atau coding bareng? Ting
     this.messages.push(msg);
     const msgEl = this._appendMessageDOM(msg, true);
     this.activeAssistantMsgElement = { msg, element: msgEl };
-    this.scrollToBottom();
+    this.shouldAutoScroll = true;
+    this.scrollToBottom(true);
     return msg;
   }
 
@@ -367,14 +369,23 @@ Mau ngapain kita hari ini? Ngobrol santai, ide project, atau coding bareng? Ting
     this.renderAll();
   }
 
-  scrollToBottom(force = false) {
+  scrollToBottom(force = false, instant = false) {
+    if (force) {
+      this.shouldAutoScroll = true;
+    }
     if (force || this.shouldAutoScroll) {
-      requestAnimationFrame(() => {
+      const scrollAction = () => {
+        if (!this.container) return;
         this.container.scrollTo({
-          top: this.container.scrollHeight,
-          behavior: 'smooth'
+          top: this.container.scrollHeight + 100,
+          behavior: instant ? 'auto' : 'smooth'
         });
-      });
+      };
+
+      requestAnimationFrame(scrollAction);
+      if (force) {
+        setTimeout(scrollAction, 60);
+      }
     }
   }
 }
