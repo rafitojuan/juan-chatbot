@@ -86,7 +86,7 @@ export class ChatManager {
       {
         id: 'msg_welcome',
         role: 'assistant',
-        content: `Yo bro, gua **J1**, digital clone dari **Rafito Juan**.
+        content: `Yo, gua **J1**, digital clone dari **Rafito Juan**.
 
 Mau ngapain kita hari ini? Ngobrol santai, ide project, atau coding bareng? Tinggal ketik aja di bawah.`,
         timestamp: Date.now()
@@ -204,7 +204,7 @@ Mau ngapain kita hari ini? Ngobrol santai, ide project, atau coding bareng? Ting
     const msg = {
       id: 'msg_err_' + Date.now(),
       role: 'system_error',
-      content: `⚠️ **Aduh, ada kendala koneksi nih bro:** ${errorText}\n\nCoba kirim ulang pesan lu ya!`,
+      content: `⚠️ **Aduh, ada kendala koneksi nih:** ${errorText}\n\nCoba kirim ulang pesan lu ya!`,
       timestamp: Date.now()
     };
     this.messages.push(msg);

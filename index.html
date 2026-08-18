@@ -3,10 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>J1</title>
-  <meta name="description" content="Web Chat AI minimalis & santai berbasis Rafito Juan (J1) dengan animasi kepala berbicara real-time chroma key.">
-  <link rel="icon" type="image/png" href="/assets/images/logo.png">
-  <link rel="apple-touch-icon" href="/assets/images/logo.png">
+  <title>Juan</title>
+  <meta name="description" content="J1 - Web Chat AI minimalis & santai berbasis Rafito Juan dengan animasi kepala berbicara real-time chroma key.">
+  
+  <!-- PWA & Mobile Web Capabilities -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#09090b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Juan">
+  <meta name="application-name" content="Juan">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/png" href="/assets/images/juanhead.png">
+  <link rel="apple-touch-icon" href="/assets/images/juanhead.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="/assets/images/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="/assets/images/icon-512.png">
+
+  <!-- Fonts & Styles -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -19,6 +34,28 @@
     <!-- Top Floating Avatar & Minimal Controls -->
     <header class="head-top-area">
       <div class="top-corner-actions">
+        <!-- PWA Download Button with Pointer Tooltip -->
+        <div class="pwa-install-wrapper">
+          <button class="minimal-icon-btn install-pwa-btn" id="installPwaBtn" title="Download & Install Aplikasi Juan" aria-label="Download dan install aplikasi Juan">
+            <span class="pwa-pulse-ring" aria-hidden="true"></span>
+            <span class="pwa-pulse-dot" aria-hidden="true"></span>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+          </button>
+
+          <!-- Floating Tooltip Hint Pointing to Download Button -->
+          <div class="pwa-callout-hint" id="pwaCalloutHint" role="tooltip">
+            <div class="pwa-callout-arrow" aria-hidden="true"></div>
+            <div class="pwa-callout-content">
+              <span class="pwa-callout-icon" aria-hidden="true">📲</span>
+              <span class="pwa-callout-text">Juan udh bisa di-download di hape kalian!</span>
+              <button class="pwa-callout-close" id="closeCalloutBtn" aria-label="Tutup petunjuk download">✕</button>
+            </div>
+          </div>
+        </div>
         <button class="minimal-icon-btn" id="clearBtn" title="Bersihkan Chat" aria-label="Bersihkan riwayat chat">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <polyline points="3 6 5 6 21 6"></polyline>
@@ -63,7 +100,7 @@
       </div>
 
       <div class="quick-capsules-row" id="quickCapsulesRow">
-        <button class="capsule-btn" data-prompt="Ceritain tentang diri lu dan siapa Rafito Juan sebenernya bro!">
+        <button class="capsule-btn" data-prompt="Ceritain tentang diri lu dan siapa Rafito Juan sebenernya!">
           <span class="capsule-icon">😊</span>
           <span class="capsule-title">Me</span>
         </button>
@@ -186,6 +223,52 @@
       <div class="confirm-actions">
         <button class="confirm-btn cancel-btn" id="cancelClearBtn" aria-label="Batal menghapus riwayat chat">Gajadi, simpen</button>
         <button class="confirm-btn delete-btn" id="confirmClearBtn" aria-label="Konfirmasi hapus semua riwayat chat">Iya, lupain aja</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PWA Install Modal Dialog -->
+  <div class="modal-overlay" id="installModal" role="dialog" aria-modal="true" aria-labelledby="installHeading">
+    <div class="modal-sheet install-sheet">
+      <div class="modal-top">
+        <h3 class="modal-heading" id="installHeading">Download & Install Aplikasi</h3>
+        <button class="close-btn" id="closeInstallBtn" aria-label="Tutup dialog download">✕</button>
+      </div>
+      <div class="modal-content install-content">
+        <div class="install-app-preview">
+          <img src="/assets/images/juanhead.png" alt="Ikon Aplikasi Juan" class="install-app-icon" />
+          <div class="install-app-info">
+            <h4 class="install-app-name">Juan</h4>
+            <p class="install-app-desc">J1 Digital AI Clone • Standalone App</p>
+          </div>
+        </div>
+
+        <p class="install-instruction-text">
+          Pasang aplikasi <strong>Juan</strong> di layar utama ponsel untuk akses instan full-screen, animasi halus, dan tanpa address bar.
+        </p>
+
+        <!-- Dynamic Direct Install Button -->
+        <button class="btn-primary-install" id="btnTriggerInstall" aria-label="Install Aplikasi Sekarang">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Install Aplikasi Sekarang</span>
+        </button>
+
+        <!-- Platform Instructions Box -->
+        <div class="install-guide-box">
+          <div class="guide-item">
+            <span class="guide-badge">Android</span>
+            <span class="guide-text">Klik tombol <strong>Install Aplikasi</strong> di atas, atau klik menu (⋮) Chrome lalu pilih <em>"Tambahkan ke Layar Utama"</em>.</span>
+          </div>
+          <div class="divider"></div>
+          <div class="guide-item">
+            <span class="guide-badge">iPhone / iPad</span>
+            <span class="guide-text">Buka di Safari, klik tombol <strong>Share</strong> (ikon panah kotak), lalu pilih <em>"Add to Home Screen"</em>.</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>

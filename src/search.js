@@ -7,30 +7,77 @@
 export const TAVILY_API_KEY_DEFAULT = import.meta.env.VITE_TAVILY_API_KEY || '';
 
 /**
- * Heuristic detector to identify if a query requires live web / current information
+ * Smart detector to decide if a query should search the live web (Tavily priority)
  * @param {string} text 
  * @returns {boolean}
  */
 export function shouldSearchWeb(text) {
   if (!text || typeof text !== 'string') return false;
-  const lower = text.toLowerCase();
+  const clean = text.trim();
+  const lower = clean.toLowerCase();
 
-  // Explicit search triggers
+  // 1. Explicit search commands
   if (lower.startsWith('/search ') || lower.startsWith('/web ') || lower.startsWith('/cari ')) {
     return true;
   }
 
-  // Temporal & freshness keywords
-  const temporalKeywords = [
-    'sekarang', 'terbaru', 'terkini', 'hari ini', 'kemarin', 'minggu ini', 'bulan ini',
-    'tahun ini', '2024', '2025', '2026', '2027', 'berita', 'update', 'rilis', 'jadwal',
-    'presiden', 'menteri', 'gubernur', 'juara', 'pemenang', 'ballon d', 'ballon dor', 'balon dor',
-    'klasemen', 'harga', 'skor', 'gempa', 'cuaca', 'trending', 'viral', 'siapa yang',
-    'kapan rilis', 'versi baru', 'pemilu', 'who is', 'latest', 'today', 'current',
-    'news', 'release date', 'winner', 'price'
+  // 2. Pure small talk & greetings to skip search
+  const pureChitChat = [
+    'halo', 'hai', 'hei', 'hey', 'p', 'tes', 'test', 'ping', 'yo', 'yoo',
+    'pagi', 'selamat pagi', 'siang', 'selamat siang', 'sore', 'malam', 'selamat malam',
+    'gimana kabar', 'apa kabar', 'lagi apa', 'lagi ngapain', 'sibuk apa',
+    'siapa lu', 'siapa kamu', 'siapa diri lu', 'ceritain tentang lu', 'ceritain diri lu',
+    'sayang', 'ayang', 'beb', 'kangen', 'love you', 'i love you', 'peluk', 'kiss',
+    'makasih', 'terima kasih', 'thanks', 'thx', 'ok', 'oke', 'sip', 'siap', 'mantap'
   ];
 
-  return temporalKeywords.some(kw => lower.includes(kw));
+  if (pureChitChat.includes(lower)) return false;
+  if (clean.split(/\s+/).length <= 2 && pureChitChat.some(cc => lower.startsWith(cc))) {
+    return false;
+  }
+
+  // 2b. Personal questions about Rafito Juan / J1's identity & preferences (Must use internal persona, NOT web search)
+  const isPersonalQuery = 
+    /\b(?:lu|kamu|juan|fito|j1)\b/i.test(lower) && 
+    /\b(?:favorit|fav|kesukaan|suka|klub|tim|lagu|musik|band|hobi|umur|usia|lahir|tanggal lahir|kuliah|sekolah|kampus|ut|universitas|tinggal|rumah|priok|pacar|istri|anak|kerja|profesi|stack|framework|game|anime|series|pendidikan|projek|project)\b/i.test(lower);
+
+  if (isPersonalQuery) {
+    return false;
+  }
+
+  // 3. Question words or any query containing '?'
+  const hasQuestionIntent = 
+    clean.includes('?') ||
+    /^(?:siapa|kapan|dimana|di mana|apa|kenapa|mengapa|bagaimana|gimana|berapa|apakah|bisa|tolong|coba|tau|tahu|jelaskan|bedanya|perbedaan|who|what|when|where|why|how|which|is|are|can|do|does|tell)\b/i.test(lower);
+
+  if (hasQuestionIntent) {
+    return true;
+  }
+
+  // 4. Broad knowledge, entity, sports, news, and temporal triggers
+  const informationalTriggers = [
+    'sekarang', 'terbaru', 'terkini', 'hari ini', 'kemarin', 'minggu ini', 'bulan ini',
+    'tahun', '2024', '2025', '2026', '2027', 'berita', 'update', 'rilis', 'jadwal',
+    'presiden', 'menteri', 'gubernur', 'juara', 'pemenang', 'ballon d', 'ballon dor', 'balon dor',
+    'klasemen', 'harga', 'skor', 'gempa', 'cuaca', 'trending', 'viral', 'pemilu',
+    'arsenal', 'chelsea', 'liverpool', 'mu', 'manchester', 'real madrid', 'barcelona',
+    'ronaldo', 'messi', 'ucl', 'champions league', 'premier league', 'liga',
+    'pemain', 'transfer', 'pelatih', 'coach', 'stadium', 'film', 'lagu', 'artis',
+    'teknologi', 'framework', 'lib', 'library', 'ai', 'model', 'mistral', 'openai',
+    'deepseek', 'gemini', 'claude', 'tavily', 'google', 'apple', 'indonesia'
+  ];
+
+  if (informationalTriggers.some(kw => lower.includes(kw))) {
+    return true;
+  }
+
+  // 5. Default to search for any substantive prompt (>= 3 words) when web search is enabled
+  const words = clean.split(/\s+/);
+  if (words.length >= 3) {
+    return true;
+  }
+
+  return false;
 }
 
 /**
@@ -41,6 +88,7 @@ export function shouldSearchWeb(text) {
 export function cleanSearchQuery(text) {
   let q = text
     .replace(/^\/(?:search|web|cari)\s+/i, '')
+    .replace(/^(?:eh\s+)?(?:tau\s+ga|tau\s+nggak|tau\s+gak|menurut\s+lu|coba\s+cariin|tolong\s+cariin|coba\s+sebutkan|kira[- ]kira)\s+/i, '')
     .replace(/[?!.,;:]+$/, '')
     .trim();
 
@@ -83,8 +131,8 @@ async function fetchTavilySearch(query, apiKey) {
       body: JSON.stringify({
         api_key: apiKey,
         query: query,
-        search_depth: 'basic',
-        max_results: 5,
+        search_depth: 'advanced',
+        max_results: 6,
         include_answer: true
       })
     });

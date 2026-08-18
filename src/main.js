@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (statusBadge) statusBadge.classList.remove('is-thinking', 'is-talking', 'is-searching');
     if (state === 'searching') {
       if (statusBadge) statusBadge.classList.add('is-searching');
-      if (statusText) statusText.textContent = 'Mencari di web 🌐...';
+      if (statusText) statusText.textContent = 'Mencari di web...';
       if (avatar) avatar.setThinking();
     } else if (state === 'thinking') {
       if (statusBadge) statusBadge.classList.add('is-thinking');
@@ -333,6 +333,108 @@ document.addEventListener('DOMContentLoaded', () => {
       const val = parseFloat(e.target.value);
       if (spillVal) spillVal.textContent = val.toFixed(2);
       avatar.setParameters({ spill: val });
+    });
+  }
+
+  // =========================================================================
+  // PWA Install Prompt, Pointer Callout & Modal Controller
+  // =========================================================================
+  const installPwaBtn = document.getElementById('installPwaBtn');
+  const installModal = document.getElementById('installModal');
+  const closeInstallBtn = document.getElementById('closeInstallBtn');
+  const btnTriggerInstall = document.getElementById('btnTriggerInstall');
+  const pwaCalloutHint = document.getElementById('pwaCalloutHint');
+  const closeCalloutBtn = document.getElementById('closeCalloutBtn');
+
+  // Check if callout was previously dismissed
+  if (pwaCalloutHint && localStorage.getItem('j1_pwa_hint_dismissed') === 'true') {
+    pwaCalloutHint.classList.add('is-dismissed');
+  }
+
+  let deferredInstallPrompt = null;
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevent default mini-infobar on mobile
+    e.preventDefault();
+    deferredInstallPrompt = e;
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredInstallPrompt = null;
+    if (installModal) installModal.classList.remove('open');
+    if (pwaCalloutHint) pwaCalloutHint.classList.add('is-dismissed');
+    if (installPwaBtn) {
+      installPwaBtn.style.display = 'none';
+    }
+  });
+
+  const openInstallModal = () => {
+    if (installModal) installModal.classList.add('open');
+    if (pwaCalloutHint) {
+      pwaCalloutHint.classList.add('is-dismissed');
+      localStorage.setItem('j1_pwa_hint_dismissed', 'true');
+    }
+    audio.playPopSound();
+  };
+
+  const closeInstallModal = () => {
+    if (installModal) installModal.classList.remove('open');
+  };
+
+  if (installPwaBtn) installPwaBtn.addEventListener('click', openInstallModal);
+  if (closeInstallBtn) closeInstallBtn.addEventListener('click', closeInstallModal);
+
+  if (pwaCalloutHint) {
+    pwaCalloutHint.addEventListener('click', (e) => {
+      if (e.target === closeCalloutBtn || closeCalloutBtn.contains(e.target)) {
+        e.stopPropagation();
+        pwaCalloutHint.classList.add('is-dismissed');
+        localStorage.setItem('j1_pwa_hint_dismissed', 'true');
+      } else {
+        openInstallModal();
+      }
+    });
+  }
+
+  if (installModal) {
+    installModal.addEventListener('click', (e) => {
+      if (e.target === installModal) closeInstallModal();
+    });
+  }
+
+  if (btnTriggerInstall) {
+    btnTriggerInstall.addEventListener('click', async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        const choiceResult = await deferredInstallPrompt.userChoice;
+        if (choiceResult.outcome === 'accepted') {
+          deferredInstallPrompt = null;
+          closeInstallModal();
+        }
+      } else {
+        // Fallback info for iOS / already installed
+        const guideBox = document.querySelector('.install-guide-box');
+        if (guideBox) {
+          guideBox.scrollIntoView({ behavior: 'smooth' });
+          guideBox.style.borderColor = 'var(--accent-blue)';
+          setTimeout(() => {
+            guideBox.style.borderColor = 'var(--border-subtle)';
+          }, 1500);
+        }
+      }
+    });
+  }
+
+  // Register Service Worker for PWA Installability
+  if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((reg) => {
+          console.log('Juan PWA Service Worker registered with scope:', reg.scope);
+        })
+        .catch((err) => {
+          console.warn('Juan PWA Service Worker registration failed:', err);
+        });
     });
   }
 });

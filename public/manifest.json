@@ -1,0 +1,38 @@
+{
+  "name": "Juan",
+  "short_name": "Juan",
+  "description": "J1 - Digital AI Clone dari Rafito Juan",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/assets/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/assets/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/images/juanhead.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["lifestyle", "entertainment", "social", "productivity"]
+}
