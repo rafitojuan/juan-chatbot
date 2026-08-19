@@ -345,6 +345,27 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnTriggerInstall = document.getElementById('btnTriggerInstall');
   const pwaCalloutHint = document.getElementById('pwaCalloutHint');
   const closeCalloutBtn = document.getElementById('closeCalloutBtn');
+  const pwaInstallWrapper = document.querySelector('.pwa-install-wrapper');
+
+  // Check if running as installed standalone PWA on mobile/desktop
+  const isRunningInStandalone = () => {
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: minimal-ui)').matches ||
+      window.navigator.standalone === true ||
+      document.referrer.includes('android-app://')
+    );
+  };
+
+  const isAlreadyInstalled = isRunningInStandalone() || localStorage.getItem('j1_pwa_installed') === 'true';
+
+  if (isAlreadyInstalled) {
+    document.body.classList.add('is-standalone');
+    if (pwaInstallWrapper) pwaInstallWrapper.classList.add('is-hidden-installed');
+    if (pwaCalloutHint) pwaCalloutHint.classList.add('is-dismissed');
+    if (installPwaBtn) installPwaBtn.style.display = 'none';
+  }
 
   // Check if callout was previously dismissed
   if (pwaCalloutHint && localStorage.getItem('j1_pwa_hint_dismissed') === 'true') {
@@ -354,6 +375,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let deferredInstallPrompt = null;
 
   window.addEventListener('beforeinstallprompt', (e) => {
+    // If already in standalone mode, ignore prompt
+    if (isRunningInStandalone()) {
+      return;
+    }
     // Prevent default mini-infobar on mobile
     e.preventDefault();
     deferredInstallPrompt = e;
@@ -361,12 +386,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.addEventListener('appinstalled', () => {
     deferredInstallPrompt = null;
+    localStorage.setItem('j1_pwa_installed', 'true');
+    document.body.classList.add('is-standalone');
     if (installModal) installModal.classList.remove('open');
     if (pwaCalloutHint) pwaCalloutHint.classList.add('is-dismissed');
+    if (pwaInstallWrapper) pwaInstallWrapper.classList.add('is-hidden-installed');
     if (installPwaBtn) {
       installPwaBtn.style.display = 'none';
     }
   });
+
+  // Watch for display-mode runtime changes
+  try {
+    const standaloneMedia = window.matchMedia('(display-mode: standalone)');
+    standaloneMedia.addEventListener('change', (e) => {
+      if (e.matches) {
+        document.body.classList.add('is-standalone');
+        if (pwaInstallWrapper) pwaInstallWrapper.classList.add('is-hidden-installed');
+        if (pwaCalloutHint) pwaCalloutHint.classList.add('is-dismissed');
+        if (installPwaBtn) installPwaBtn.style.display = 'none';
+      }
+    });
+  } catch (_) {}
 
   const openInstallModal = () => {
     if (installModal) installModal.classList.add('open');

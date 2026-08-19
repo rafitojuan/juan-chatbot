@@ -3,7 +3,7 @@
  * Strategy: Cache-first for local static assets, Network-only for LLM API and Search endpoints
  */
 
-const CACHE_NAME = 'juan-pwa-v1';
+const CACHE_NAME = 'juan-pwa-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -13,6 +13,8 @@ const STATIC_ASSETS = [
   '/assets/images/logo.png',
   '/assets/images/icon-192.png',
   '/assets/images/icon-512.png',
+  '/assets/images/icon-maskable-192.png',
+  '/assets/images/icon-maskable-512.png',
   '/assets/images/apple-touch-icon.png',
   '/assets/videos/juanhead.mp4',
   '/assets/audio/pop.mp3',

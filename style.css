@@ -1199,6 +1199,20 @@ input:checked + .toggle-slider:before {
   }
 }
 
+/* When running as installed standalone PWA, completely hide install wrapper & prompts */
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  .pwa-install-wrapper,
+  .install-pwa-btn,
+  .pwa-callout-hint {
+    display: none !important;
+  }
+}
+
+.pwa-install-wrapper.is-hidden-installed,
+body.is-standalone .pwa-install-wrapper {
+  display: none !important;
+}
+
 /* Accessibility: Prefers Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

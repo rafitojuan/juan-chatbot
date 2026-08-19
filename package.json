@@ -9,11 +9,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "marked": "^15.0.7",
+    "canvas-confetti": "^1.9.4",
     "highlight.js": "^11.11.1",
-    "canvas-confetti": "^1.9.4"
+    "marked": "^15.0.7"
   },
   "devDependencies": {
+    "sharp": "^0.35.3",
     "vite": "^6.2.0"
   }
 }
